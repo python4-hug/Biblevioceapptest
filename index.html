@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voice Bible Pro</title>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#111;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+.container{
+width:95%;
+max-width:1100px;
+text-align:center;
+}
+
+h1{
+font-size:42px;
+}
+
+.controls{
+margin:15px 0;
+}
+
+button{
+padding:12px 20px;
+margin:5px;
+font-size:16px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.mic{background:#e74c3c;color:white}
+.theme{background:#3498db;color:white}
+.full{background:#27ae60;color:white}
+.copy{background:#f39c12;color:white}
+
+select{
+padding:10px;
+font-size:16px;
+border-radius:6px;
+margin-top:10px;
+}
+
+input{
+padding:12px;
+width:60%;
+font-size:16px;
+border-radius:6px;
+border:none;
+margin-top:10px;
+}
+
+.verse-box{
+margin-top:25px;
+padding:30px;
+background:#222;
+border-radius:10px;
+font-size:34px;
+line-height:1.6;
+animation:fade 0.5s ease;
+}
+
+@keyframes fade{
+from{opacity:0;transform:translateY(15px)}
+to{opacity:1}
+}
+
+.light{
+background:#f4f4f4;
+color:black;
+}
+
+.light .verse-box{
+background:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Voice Bible Pro</h1>
+
+<div class="controls">
+
+<button id="micBtn" class="mic">🎤 Listening</button>
+
+<button id="themeBtn" class="theme">Theme</button>
+
+<button id="fullBtn" class="full">Projection</button>
+
+<button id="copyBtn" class="copy">Copy</button>
+
+</div>
+
+<select id="translation">
+
+<option value="kjv">KJV</option>
+<option value="niv">NIV</option>
+<option value="nlt">NLT</option>
+<option value="esv">ESV</option>
+<option value="nkjv">NKJV</option>
+
+</select>
+
+<br>
+
+<input id="manualSearch" placeholder="Type John 3:16">
+
+<div id="speechText">Listening for scripture...</div>
+
+<div class="verse-box" id="verseResult">
+Say: John 3 verse 16
+</div>
+
+</div>
+
+<script>
+
+// =============================
+// BIBLE DATABASE
+// =============================
+
+const bible=[
+
+{book:"john",chapter:3,verse:16,
+kjv:"For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+niv:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
+nlt:"For this is how God loved the world: He gave his one and only Son, so that everyone who believes in him will not perish but have eternal life.",
+esv:"For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life.",
+nkjv:"For God so loved the world that He gave His only begotten Son, that whoever believes in Him should not perish but have everlasting life."
+},
+
+{book:"genesis",chapter:1,verse:1,
+kjv:"In the beginning God created the heaven and the earth.",
+niv:"In the beginning God created the heavens and the earth.",
+nlt:"In the beginning God created the heavens and the earth.",
+esv:"In the beginning, God created the heavens and the earth.",
+nkjv:"In the beginning God created the heavens and the earth."
+},
+
+{book:"psalm",chapter:23,verse:1,
+kjv:"The Lord is my shepherd; I shall not want.",
+niv:"The Lord is my shepherd, I lack nothing.",
+nlt:"The Lord is my shepherd; I have all that I need.",
+esv:"The Lord is my shepherd; I shall not want.",
+nkjv:"The Lord is my shepherd; I shall not want."
+},
+
+{book:"romans",chapter:8,verse:28,
+kjv:"And we know that all things work together for good to them that love God.",
+niv:"And we know that in all things God works for the good of those who love him.",
+nlt:"And we know that God causes everything to work together for the good of those who love God.",
+esv:"And we know that for those who love God all things work together for good.",
+nkjv:"And we know that all things work together for good to those who love God."
+},
+
+{book:"philippians",chapter:4,verse:13,
+kjv:"I can do all things through Christ which strengtheneth me.",
+niv:"I can do all this through him who gives me strength.",
+nlt:"For I can do everything through Christ, who gives me strength.",
+esv:"I can do all things through him who strengthens me.",
+nkjv:"I can do all things through Christ who strengthens me."
+},
+
+{book:"jeremiah",chapter:29,verse:11,
+kjv:"For I know the thoughts that I think toward you, saith the Lord.",
+niv:"For I know the plans I have for you.",
+nlt:"For I know the plans I have for you.",
+esv:"For I know the plans I have for you.",
+nkjv:"For I know the thoughts that I think toward you."
+},
+
+{book:"proverbs",chapter:3,verse:5,
+kjv:"Trust in the Lord with all thine heart; and lean not unto thine own understanding.",
+niv:"Trust in the Lord with all your heart and lean not on your own understanding.",
+nlt:"Trust in the Lord with all your heart; do not depend on your own understanding.",
+esv:"Trust in the Lord with all your heart, and do not lean on your own understanding.",
+nkjv:"Trust in the Lord with all your heart, And lean not on your own understanding."
+},
+
+{book:"isaiah",chapter:41,verse:10,
+kjv:"Fear thou not; for I am with thee.",
+niv:"So do not fear, for I am with you.",
+nlt:"Don’t be afraid, for I am with you.",
+esv:"Fear not, for I am with you.",
+nkjv:"Fear not, for I am with you."
+},
+
+{book:"matthew",chapter:11,verse:28,
+kjv:"Come unto me, all ye that labour and are heavy laden, and I will give you rest.",
+niv:"Come to me, all you who are weary and burdened, and I will give you rest.",
+nlt:"Come to me, all of you who are weary and carry heavy burdens.",
+esv:"Come to me, all who labor and are heavy laden.",
+nkjv:"Come to Me, all you who labor and are heavy laden."
+},
+
+{book:"john",chapter:14,verse:6,
+kjv:"Jesus saith unto him, I am the way, the truth, and the life.",
+niv:"Jesus answered, I am the way and the truth and the life.",
+nlt:"Jesus told him, I am the way, the truth, and the life.",
+esv:"Jesus said to him, I am the way, and the truth, and the life.",
+nkjv:"Jesus said to him, I am the way, the truth, and the life."
+}
+
+]
+
+// =============================
+// VOICE RECOGNITION
+// =============================
+
+const SpeechRecognition=
+window.SpeechRecognition||
+window.webkitSpeechRecognition
+
+const recognition=new SpeechRecognition()
+
+recognition.continuous=true
+recognition.lang="en-US"
+
+recognition.start()
+
+recognition.onresult=function(event){
+
+let speech=
+event.results[event.results.length-1][0]
+.transcript
+.toLowerCase()
+
+document.getElementById("speechText")
+.innerText="Detected: "+speech
+
+parseScripture(speech)
+
+}
+
+recognition.onend=()=>recognition.start()
+
+// =============================
+// PARSE SPEECH
+// =============================
+
+function parseScripture(text){
+
+text=text.replace(":"," ")
+
+let words=text.split(" ")
+
+let book=words[0]
+
+let nums=words.filter(w=>!isNaN(w))
+
+if(nums.length<2)return
+
+let chapter=parseInt(nums[0])
+let verse=parseInt(nums[1])
+
+searchVerse(book,chapter,verse)
+
+}
+
+// =============================
+// SEARCH
+// =============================
+
+function searchVerse(book,chapter,verse){
+
+let translation=
+document.getElementById("translation").value
+
+let verse=bible.find(v=>
+v.book===book &&
+v.chapter===chapter &&
+v.verse===verse
+)
+
+if(!verse){
+document.getElementById("verseResult")
+.innerText="Verse not found"
+return
+}
+
+document.getElementById("verseResult")
+.innerText=
+book.toUpperCase()+" "+
+chapter+":"+verse+" - "+
+verse[translation]
+
+}
+
+// =============================
+// FEATURES
+// =============================
+
+document.getElementById("themeBtn").onclick=()=>{
+document.body.classList.toggle("light")
+}
+
+document.getElementById("copyBtn").onclick=()=>{
+navigator.clipboard.writeText(
+document.getElementById("verseResult").innerText
+)
+}
+
+document.getElementById("fullBtn").onclick=()=>{
+document.documentElement.requestFullscreen()
+}
+
+document.getElementById("manualSearch")
+.addEventListener("keypress",e=>{
+if(e.key==="Enter"){
+parseScripture(e.target.value.toLowerCase())
+}
+})
+
+// keyboard navigation
+document.addEventListener("keydown",e=>{
+
+if(e.key==="ArrowRight")
+alert("Next verse feature coming")
+
+if(e.key==="ArrowLeft")
+alert("Previous verse feature coming")
+
+})
+
+</script>
+
+</body>
+</html>
