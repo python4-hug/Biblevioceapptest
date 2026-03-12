@@ -187,7 +187,6 @@ const verseResult = document.getElementById("verseResult")
 const manualSearch = document.getElementById("manualSearch")
 const translationSelect = document.getElementById("translation")
 
-// store last verse
 let lastReference = null
 
 // =============================
@@ -207,7 +206,6 @@ recognition.continuous = true
 recognition.lang = "en-US"
 recognition.interimResults = false
 
-// Start listening when mic button clicked
 micBtn.onclick = () => {
 
 recognition.start()
@@ -215,7 +213,6 @@ speechText.innerText = "Listening..."
 
 }
 
-// When voice is detected
 recognition.onresult = function(event){
 
 let speech =
@@ -225,11 +222,14 @@ event.results[event.results.length-1][0]
 
 speechText.innerText = "Detected: " + speech
 
+// detect reference
 parseScripture(speech)
+
+// detect quoted verse
+detectQuotedVerse(speech)
 
 }
 
-// Restart automatically if stopped
 recognition.onend = () => {
 recognition.start()
 }
@@ -258,6 +258,68 @@ searchVerse(book, chapter, verse)
 }
 
 // =============================
+// INTELLIGENT VERSE DETECTION
+// =============================
+
+function detectQuotedVerse(text){
+
+text = text.toLowerCase()
+
+let bestMatch = null
+let bestScore = 0
+let detectedTranslation = "kjv"
+
+bible.forEach(v=>{
+
+let translations = ["kjv","niv","nlt","esv","nkjv"]
+
+translations.forEach(t=>{
+
+let verseText = v[t].toLowerCase()
+
+let words = text.split(" ")
+
+let score = 0
+
+words.forEach(w=>{
+if(verseText.includes(w)){
+score++
+}
+})
+
+if(score > bestScore && score > 4){
+
+bestScore = score
+bestMatch = v
+detectedTranslation = t
+
+}
+
+})
+
+})
+
+if(bestMatch){
+
+lastReference = {
+book:bestMatch.book,
+chapter:bestMatch.chapter,
+verse:bestMatch.verse
+}
+
+translationSelect.value = detectedTranslation
+
+verseResult.innerText =
+bestMatch.book.toUpperCase()+" "+
+bestMatch.chapter+":"+
+bestMatch.verse+" - "+
+bestMatch[detectedTranslation]
+
+}
+
+}
+
+// =============================
 // SEARCH VERSE
 // =============================
 
@@ -272,13 +334,10 @@ v.verse === verse
 )
 
 if(!result){
-
 verseResult.innerText = "Verse not found"
 return
-
 }
 
-// save last verse reference
 lastReference = {book,chapter,verse}
 
 verseResult.innerText =
@@ -311,9 +370,7 @@ lastReference.verse
 manualSearch.addEventListener("keypress", e => {
 
 if(e.key === "Enter"){
-
 parseScripture(e.target.value.toLowerCase())
-
 }
 
 })
@@ -323,9 +380,7 @@ parseScripture(e.target.value.toLowerCase())
 // =============================
 
 document.getElementById("themeBtn").onclick = () => {
-
 document.body.classList.toggle("light")
-
 }
 
 // =============================
@@ -345,14 +400,10 @@ verseResult.innerText
 // =============================
 
 document.getElementById("fullBtn").onclick = () => {
-
 document.documentElement.requestFullscreen()
-
 }
 
-// =============================
 // KEYBOARD SHORTCUT
-// =============================
 
 document.addEventListener("keydown", e => {
 
