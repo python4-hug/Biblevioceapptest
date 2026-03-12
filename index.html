@@ -129,7 +129,6 @@ Say: John 3 verse 16
 </div>
 
 <script>
-
 // =============================
 // BIBLE DATABASE
 // =============================
@@ -188,12 +187,19 @@ const verseResult = document.getElementById("verseResult")
 const manualSearch = document.getElementById("manualSearch")
 const translationSelect = document.getElementById("translation")
 
+// store last verse
+let lastReference = null
+
 // =============================
 // VOICE RECOGNITION
 // =============================
 
 const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition
+
+if(!SpeechRecognition){
+alert("Voice recognition not supported in this browser")
+}
 
 const recognition = new SpeechRecognition()
 
@@ -272,12 +278,31 @@ return
 
 }
 
+// save last verse reference
+lastReference = {book,chapter,verse}
+
 verseResult.innerText =
 book.toUpperCase() +
 " " + chapter + ":" + verse +
 " - " + result[translation]
 
 }
+
+// =============================
+// UPDATE WHEN TRANSLATION CHANGES
+// =============================
+
+translationSelect.addEventListener("change", ()=>{
+
+if(!lastReference) return
+
+searchVerse(
+lastReference.book,
+lastReference.chapter,
+lastReference.verse
+)
+
+})
 
 // =============================
 // MANUAL SEARCH
@@ -325,7 +350,9 @@ document.documentElement.requestFullscreen()
 
 }
 
-// KEYBOARD SHORTCUTS
+// =============================
+// KEYBOARD SHORTCUT
+// =============================
 
 document.addEventListener("keydown", e => {
 
@@ -334,7 +361,6 @@ document.documentElement.requestFullscreen()
 }
 
 })
-
 </script>
 
 </body>
