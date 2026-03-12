@@ -134,7 +134,7 @@ Say: John 3 verse 16
 // BIBLE DATABASE
 // =============================
 
-const bible=[
+const bible = [
 
 {book:"john",chapter:3,verse:16,
 kjv:"For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
@@ -174,166 +174,164 @@ niv:"I can do all this through him who gives me strength.",
 nlt:"For I can do everything through Christ, who gives me strength.",
 esv:"I can do all things through him who strengthens me.",
 nkjv:"I can do all things through Christ who strengthens me."
-},
-
-{book:"jeremiah",chapter:29,verse:11,
-kjv:"For I know the thoughts that I think toward you, saith the Lord.",
-niv:"For I know the plans I have for you.",
-nlt:"For I know the plans I have for you.",
-esv:"For I know the plans I have for you.",
-nkjv:"For I know the thoughts that I think toward you."
-},
-
-{book:"proverbs",chapter:3,verse:5,
-kjv:"Trust in the Lord with all thine heart; and lean not unto thine own understanding.",
-niv:"Trust in the Lord with all your heart and lean not on your own understanding.",
-nlt:"Trust in the Lord with all your heart; do not depend on your own understanding.",
-esv:"Trust in the Lord with all your heart, and do not lean on your own understanding.",
-nkjv:"Trust in the Lord with all your heart, And lean not on your own understanding."
-},
-
-{book:"isaiah",chapter:41,verse:10,
-kjv:"Fear thou not; for I am with thee.",
-niv:"So do not fear, for I am with you.",
-nlt:"Don’t be afraid, for I am with you.",
-esv:"Fear not, for I am with you.",
-nkjv:"Fear not, for I am with you."
-},
-
-{book:"matthew",chapter:11,verse:28,
-kjv:"Come unto me, all ye that labour and are heavy laden, and I will give you rest.",
-niv:"Come to me, all you who are weary and burdened, and I will give you rest.",
-nlt:"Come to me, all of you who are weary and carry heavy burdens.",
-esv:"Come to me, all who labor and are heavy laden.",
-nkjv:"Come to Me, all you who labor and are heavy laden."
-},
-
-{book:"john",chapter:14,verse:6,
-kjv:"Jesus saith unto him, I am the way, the truth, and the life.",
-niv:"Jesus answered, I am the way and the truth and the life.",
-nlt:"Jesus told him, I am the way, the truth, and the life.",
-esv:"Jesus said to him, I am the way, and the truth, and the life.",
-nkjv:"Jesus said to him, I am the way, the truth, and the life."
 }
 
 ]
 
 // =============================
+// ELEMENTS
+// =============================
+
+const micBtn = document.getElementById("micBtn")
+const speechText = document.getElementById("speechText")
+const verseResult = document.getElementById("verseResult")
+const manualSearch = document.getElementById("manualSearch")
+const translationSelect = document.getElementById("translation")
+
+// =============================
 // VOICE RECOGNITION
 // =============================
 
-const SpeechRecognition=
-window.SpeechRecognition||
-window.webkitSpeechRecognition
+const SpeechRecognition =
+window.SpeechRecognition || window.webkitSpeechRecognition
 
-const recognition=new SpeechRecognition()
+const recognition = new SpeechRecognition()
 
-recognition.continuous=true
-recognition.lang="en-US"
+recognition.continuous = true
+recognition.lang = "en-US"
+recognition.interimResults = false
+
+// Start listening when mic button clicked
+micBtn.onclick = () => {
 
 recognition.start()
+speechText.innerText = "Listening..."
 
-recognition.onresult=function(event){
+}
 
-let speech=
+// When voice is detected
+recognition.onresult = function(event){
+
+let speech =
 event.results[event.results.length-1][0]
 .transcript
 .toLowerCase()
 
-document.getElementById("speechText")
-.innerText="Detected: "+speech
+speechText.innerText = "Detected: " + speech
 
 parseScripture(speech)
 
 }
 
-recognition.onend=()=>recognition.start()
+// Restart automatically if stopped
+recognition.onend = () => {
+recognition.start()
+}
 
 // =============================
-// PARSE SPEECH
+// PARSE SCRIPTURE
 // =============================
 
 function parseScripture(text){
 
-text=text.replace(":"," ")
+text = text.replace(":", " ")
 
-let words=text.split(" ")
+let words = text.split(" ")
 
-let book=words[0]
+let book = words[0]
 
-let nums=words.filter(w=>!isNaN(w))
+let numbers = words.filter(w => !isNaN(w))
 
-if(nums.length<2)return
+if(numbers.length < 2) return
 
-let chapter=parseInt(nums[0])
-let verse=parseInt(nums[1])
+let chapter = parseInt(numbers[0])
+let verse = parseInt(numbers[1])
 
-searchVerse(book,chapter,verse)
+searchVerse(book, chapter, verse)
 
 }
 
 // =============================
-// SEARCH
+// SEARCH VERSE
 // =============================
 
-function searchVerse(book,chapter,verse){
+function searchVerse(book, chapter, verse){
 
-let translation=
-document.getElementById("translation").value
+let translation = translationSelect.value
 
-let verse=bible.find(v=>
-v.book===book &&
-v.chapter===chapter &&
-v.verse===verse
+let result = bible.find(v =>
+v.book === book &&
+v.chapter === chapter &&
+v.verse === verse
 )
 
-if(!verse){
-document.getElementById("verseResult")
-.innerText="Verse not found"
+if(!result){
+
+verseResult.innerText = "Verse not found"
 return
+
 }
 
-document.getElementById("verseResult")
-.innerText=
-book.toUpperCase()+" "+
-chapter+":"+verse+" - "+
-verse[translation]
+verseResult.innerText =
+book.toUpperCase() +
+" " + chapter + ":" + verse +
+" - " + result[translation]
 
 }
 
 // =============================
-// FEATURES
+// MANUAL SEARCH
 // =============================
 
-document.getElementById("themeBtn").onclick=()=>{
-document.body.classList.toggle("light")
-}
+manualSearch.addEventListener("keypress", e => {
 
-document.getElementById("copyBtn").onclick=()=>{
-navigator.clipboard.writeText(
-document.getElementById("verseResult").innerText
-)
-}
+if(e.key === "Enter"){
 
-document.getElementById("fullBtn").onclick=()=>{
-document.documentElement.requestFullscreen()
-}
-
-document.getElementById("manualSearch")
-.addEventListener("keypress",e=>{
-if(e.key==="Enter"){
 parseScripture(e.target.value.toLowerCase())
+
 }
+
 })
 
-// keyboard navigation
-document.addEventListener("keydown",e=>{
+// =============================
+// THEME BUTTON
+// =============================
 
-if(e.key==="ArrowRight")
-alert("Next verse feature coming")
+document.getElementById("themeBtn").onclick = () => {
 
-if(e.key==="ArrowLeft")
-alert("Previous verse feature coming")
+document.body.classList.toggle("light")
+
+}
+
+// =============================
+// COPY VERSE
+// =============================
+
+document.getElementById("copyBtn").onclick = () => {
+
+navigator.clipboard.writeText(
+verseResult.innerText
+)
+
+}
+
+// =============================
+// FULLSCREEN
+// =============================
+
+document.getElementById("fullBtn").onclick = () => {
+
+document.documentElement.requestFullscreen()
+
+}
+
+// KEYBOARD SHORTCUTS
+
+document.addEventListener("keydown", e => {
+
+if(e.key === "f"){
+document.documentElement.requestFullscreen()
+}
 
 })
 
