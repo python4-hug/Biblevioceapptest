@@ -339,7 +339,9 @@ nkjv:"Behold, I stand at the door and knock. If anyone hears My voice and opens 
 
 ]
 
+// =============================
 // ELEMENTS
+// =============================
 
 const micBtn = document.getElementById("micBtn")
 const speechText = document.getElementById("speechText")
@@ -348,6 +350,25 @@ const manualSearch = document.getElementById("manualSearch")
 const translationSelect = document.getElementById("translation")
 
 let lastReference = null
+let verseTimer = null
+
+// =============================
+// DISPLAY WITH 1 SECOND DELAY
+// =============================
+
+function showVerseDelayed(text){
+
+if(verseTimer){
+clearTimeout(verseTimer)
+}
+
+verseTimer = setTimeout(()=>{
+
+verseResult.innerText = text
+
+},1000)
+
+}
 
 // =============================
 // VOICE RECOGNITION
@@ -469,11 +490,13 @@ verse:bestMatch.verse
 
 translationSelect.value = detectedTranslation
 
-verseResult.innerText =
+let displayText =
 bestMatch.book.toUpperCase()+" "+
 bestMatch.chapter+":"+
 bestMatch.verse+" - "+
 bestMatch[detectedTranslation]
+
+showVerseDelayed(displayText)
 
 }
 
@@ -494,16 +517,18 @@ v.verse === verse
 )
 
 if(!result){
-verseResult.innerText = "Verse not found"
+showVerseDelayed("Verse not found")
 return
 }
 
 lastReference = {book,chapter,verse}
 
-verseResult.innerText =
+let displayText =
 book.toUpperCase() +
 " " + chapter + ":" + verse +
 " - " + result[translation]
+
+showVerseDelayed(displayText)
 
 }
 
@@ -563,7 +588,9 @@ document.getElementById("fullBtn").onclick = () => {
 document.documentElement.requestFullscreen()
 }
 
+// =============================
 // KEYBOARD SHORTCUT
+// =============================
 
 document.addEventListener("keydown", e => {
 
@@ -572,6 +599,7 @@ document.documentElement.requestFullscreen()
 }
 
 })
+
 </script>
 
 </body>
