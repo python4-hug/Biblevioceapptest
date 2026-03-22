@@ -5164,8 +5164,14 @@ const verseResult = document.getElementById("verseResult")
 const manualSearch = document.getElementById("manualSearch")
 const translationSelect = document.getElementById("translation")
 
+// 🔥 NEW (projection elements)
+const projectionBtn = document.getElementById("projectionBtn")
+const projectionVerse = document.getElementById("projectionVerse")
+const projectionStatus = document.getElementById("projectionStatus")
+
 let lastReference = null
 let verseTimer = null
+let listening = false
 
 // =============================
 // DISPLAY WITH 1 SECOND DELAY
@@ -5180,6 +5186,11 @@ clearTimeout(verseTimer)
 verseTimer = setTimeout(()=>{
 
 verseResult.innerText = text
+
+// 🔥 UPDATE PROJECTION SCREEN
+if(projectionVerse){
+projectionVerse.innerText = text
+}
 
 },1000)
 
@@ -5196,7 +5207,7 @@ if(!SpeechRecognition){
 alert("Voice recognition not supported in this browser")
 }
 
-const recognition = new SpeechRecognition()
+let recognition = new SpeechRecognition()
 
 recognition.continuous = true
 recognition.lang = "en-US"
@@ -5204,8 +5215,19 @@ recognition.interimResults = false
 
 micBtn.onclick = () => {
 
+if(listening){
+recognition.stop()
+listening = false
+speechText.innerText = "Stopped"
+projectionStatus.innerText = "⏸️ Stopped"
+}else{
+try{
 recognition.start()
+listening = true
 speechText.innerText = "Listening..."
+projectionStatus.innerText = "🎤 Listening..."
+}catch(e){}
+}
 
 }
 
@@ -5217,17 +5239,20 @@ event.results[event.results.length-1][0]
 .toLowerCase()
 
 speechText.innerText = "Detected: " + speech
+projectionStatus.innerText = "🎤 Listening..."
 
-// detect reference
 parseScripture(speech)
-
-// detect quoted verse
 detectQuotedVerse(speech)
 
 }
 
+// 🔥 FIX: Prevent infinite crash loop
 recognition.onend = () => {
-recognition.start()
+if(listening){
+setTimeout(()=>{
+try{ recognition.start() }catch(e){}
+},300)
+}
 }
 
 // =============================
@@ -5236,7 +5261,7 @@ recognition.start()
 
 function parseScripture(text){
 
-text = text.replace(":", " ")
+text = text.toLowerCase().replace(":", " ")
 
 let words = text.split(" ")
 
@@ -5284,11 +5309,9 @@ score++
 })
 
 if(score > bestScore && score > 4){
-
 bestScore = score
 bestMatch = v
 detectedTranslation = t
-
 }
 
 })
@@ -5313,6 +5336,8 @@ bestMatch[detectedTranslation]
 
 showVerseDelayed(displayText)
 
+projectionStatus.innerText = "🔍 Auto detected"
+
 }
 
 }
@@ -5333,6 +5358,7 @@ v.verse === verse
 
 if(!result){
 showVerseDelayed("Verse not found")
+projectionStatus.innerText = "⛔ Not found"
 return
 }
 
@@ -5344,6 +5370,9 @@ book.toUpperCase() +
 " - " + result[translation]
 
 showVerseDelayed(displayText)
+
+projectionStatus.innerText =
+"📖 " + book + " " + chapter + ":" + verse
 
 }
 
@@ -5360,6 +5389,8 @@ lastReference.book,
 lastReference.chapter,
 lastReference.verse
 )
+
+projectionStatus.innerText = "📖 Translation changed"
 
 })
 
@@ -5414,6 +5445,23 @@ document.documentElement.requestFullscreen()
 }
 
 })
+
+// =============================
+// 🔥 PROJECTION MODE TOGGLE
+// =============================
+
+projectionBtn.onclick = () => {
+
+document.body.classList.toggle("projection-mode")
+
+if(document.body.classList.contains("projection-mode")){
+projectionStatus.innerText = "🖥️ Projection Active"
+}else{
+projectionStatus.innerText = "⏸️ Standby"
+}
+
+}
+
 
 </script>
 
